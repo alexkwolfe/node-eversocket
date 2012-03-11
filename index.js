@@ -7,7 +7,10 @@ var EverSocket = function(options) {
   
   net.Socket.call(this, options);
   
+  this.setTimeout(options.timeout || 0);
+  
   this._retry = {
+    onTimeout: options.reconnectOnTimeout || false,
     wait: options.reconnectWait || 1000,
     waiting: false
   };
@@ -21,9 +24,20 @@ EverSocket.prototype.setReconnectWait = function reconnectWait(ms) {
   this._retry.wait = ms;
 };
 
+EverSocket.prototype.setReconnectOnTimeout = function reconnectOnTimeout(reconnect) {
+  this._retry.onTimeout = reconnect;
+  this._setupTimeoutListener();
+};
+
 EverSocket.prototype.destroy = function destroy() {
-  this.removeListener('close', this._closeListener);  
-  this._closeListener = null;
+  if (this._timeoutListener) {
+    this.removeListener('timeout', this._timeoutListener);  
+    this._timeoutListener = null;
+  }
+  if (this._closeListener) {
+    this.removeListener('close', this._closeListener);  
+    this._closeListener = null;
+  }
   this.constructor.super_.prototype.destroy();
 };
 
@@ -101,6 +115,21 @@ EverSocket.prototype._setup = function _setup() {
       self.reconnect();
     };
     this.on('close', this._closeListener);
+  }
+  this._setupTimeoutListener();
+};
+
+EverSocket.prototype._setupTimeoutListener = function _setupTimeoutListener() {
+  var self = this;
+  if (this._retry.onTimeout && !this._timeoutListener) {
+    this._timeoutListener = function() {
+      self.reset();
+      self.reconnect();
+    };
+    this.on('timeout', this._timeoutListener);
+  } else if (!this._retry.onTimeout && this._timeoutListener) {
+    this.removeListener('timeout', this._timeoutListener);
+    this._timeoutListener = null;
   }
 };
 
