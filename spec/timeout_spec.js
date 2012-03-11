@@ -14,7 +14,8 @@ describe("EverSocket", function() {
   beforeEach(function() {
     server = net.createServer();
     server.listen(port);
-    socket = new EverSocket({ type: 'tcp4', idle: 10 })
+    socket = new EverSocket({ type: 'tcp4' });
+    socket.setTimeout(10);
   });
   
   afterEach(function() {

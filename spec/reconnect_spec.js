@@ -14,12 +14,16 @@ describe("EverSocket", function() {
   beforeEach(function() {
     server = net.createServer();
     server.listen(port);
-    socket = new EverSocket({ type: 'tcp4' })
+    socket = new EverSocket({ type: 'tcp4' });
   });
   
   afterEach(function() {
-    try { socket.destroy(); } catch(e) {}
-    try { server.close(); } catch(e) {}
+    try { 
+      socket.destroy(); 
+    } catch(e) {}
+    try { 
+      server.close(); 
+    } catch(e) {}
   });
   
   it('should connect', function(done) {
@@ -39,7 +43,7 @@ describe("EverSocket", function() {
   it('should reconnect', function(done) {
     var reconnected = false;
     
-    server.on('connection', function() {
+    server.once('connection', function() {
       // socket connected for the first time
       server.once('close', function() {
         // recreate the connection
@@ -53,12 +57,14 @@ describe("EverSocket", function() {
       
       // close the connection
       server.close();
-      socket.destroy();
+      socket.reset();
       
       // listen for reconnect
-      socket.on('reconnect', function() {
-        assert.isTrue(reconnected);
-        done();
+      socket.once('reconnect', function() {
+        setTimeout(function() {
+          assert.isTrue(reconnected);
+          done();
+        }, 100);
       });
     });
     
