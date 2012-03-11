@@ -1,0 +1,12 @@
+{
+  "name": "eversock",
+  "version": "0.0.1",
+  "dependencies": {},
+  "devDependencies": {
+    "temp":">= 0.4.x",
+    "mocha": ">= 0.0.x",
+    "chai": ">= 0.0.x"
+  },
+  "main": "app",
+  "engines": { "node": ">=0.6.x" }
+}
