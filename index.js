@@ -38,7 +38,7 @@ EverSocket.prototype.destroy = function destroy() {
     this.removeListener('close', this._closeListener);  
     this._closeListener = null;
   }
-  this.constructor.super_.prototype.destroy();
+  this.constructor.super_.prototype.destroy.call(this);
 };
 
 EverSocket.prototype.reset = function reset() {
