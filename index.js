@@ -61,9 +61,12 @@ EverSocket.prototype.reconnect = function reconnect() {
     // Set flag to indicate reconnecting
     self._retry.waiting = true;
     
-    // Remove reconnecting flag after connect
+    // Remove reconnecting flag after connect or error
     self.once('connect', function () {
       self.emit('reconnect');
+      self._retry.waiting = false;
+    });
+    self.once('error', function() {
       self._retry.waiting = false;
     });
     
@@ -100,11 +103,10 @@ EverSocket.prototype.connect = function connect(/*port, host, callback*/) {
     }
   });
 
-  host = host || '127.0.0.1';
   this.port = port || this.port;
-  this.host = host || this.host;
+  this.host = host || this.host || '127.0.0.1';
   args = this.port ? [this.port, this.host] : [this.host];
-  
+
   this.constructor.super_.prototype.connect.apply(this, args);
 };
 
