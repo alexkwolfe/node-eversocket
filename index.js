@@ -1,20 +1,22 @@
 var net = require('net'),
     util = require('util');
 
-var EverSocket = function(options) {
+var EverSocket = function (options) {
   if (!(this instanceof EverSocket))
     return new EverSocket(options);
-  
+
   net.Socket.call(this, options);
-  
+
   this.setTimeout(options.timeout || 0);
-  
+
   this._retry = {
     onTimeout: options.reconnectOnTimeout || false,
     wait: options.reconnectWait || 1000,
     waiting: false
   };
-  
+
+  this._destroyed = false;
+
   this._setup();
 };
 
@@ -30,51 +32,56 @@ EverSocket.prototype.setReconnectOnTimeout = function reconnectOnTimeout(reconne
 };
 
 EverSocket.prototype.destroy = function destroy() {
+  this._destroyed = true;
   if (this._timeoutListener) {
-    this.removeListener('timeout', this._timeoutListener);  
+    this.removeListener('timeout', this._timeoutListener);
     this._timeoutListener = null;
   }
   if (this._closeListener) {
-    this.removeListener('close', this._closeListener);  
+    this.removeListener('close', this._closeListener);
     this._closeListener = null;
   }
   this.constructor.super_.prototype.destroy.call(this);
 };
 
 EverSocket.prototype.reset = function reset() {
+  this._destroyed = false;
+  this._retry.waiting = false;
   this.constructor.super_.prototype.destroy.call(this);
 };
 
 EverSocket.prototype.reconnect = function reconnect() {
   var self = this;
-  
-  // if (this.writable && this.readable)
-  //   return; // already connected
-  
+
   // Reconnection helper
   function doReconnect() {
-    
-    // Bail if we're already reconnecting
-    if (self._retry.waiting)
+
+    // Bail if we're already reconnecting or if we have been destroyed
+    if (self._retry.waiting || self._destroyed)
       return;
 
     // Set flag to indicate reconnecting
     self._retry.waiting = true;
-    
+
     // Remove reconnecting flag after connect or error
-    self.once('connect', function () {
+    var connectListener, errorListener;
+    connectListener = function() {
+      self.removeListener('error', errorListener);
       self.emit('reconnect');
       self._retry.waiting = false;
-    });
-    self.once('error', function() {
+    };
+    errorListener = function () {
+      self.removeListener('connect', connectListener);
       self._retry.waiting = false;
-    });
-    
+    };
+    self.once('connect', connectListener);
+    self.once('error', errorListener);
+
     // Attempt to reconnect
     self._setup();
     self.connect();
   }
-  
+
   setTimeout(doReconnect, this._retry.wait);
 };
 
@@ -113,7 +120,7 @@ EverSocket.prototype.connect = function connect(/*port, host, callback*/) {
 EverSocket.prototype._setup = function _setup() {
   var self = this;
   if (!this._closeListener) {
-    this._closeListener = function() {
+    this._closeListener = function () {
       self.reconnect();
     };
     this.on('close', this._closeListener);
@@ -122,9 +129,10 @@ EverSocket.prototype._setup = function _setup() {
 };
 
 EverSocket.prototype._setupTimeoutListener = function _setupTimeoutListener() {
+  if (this._destroyed) return;
   var self = this;
   if (this._retry.onTimeout && !this._timeoutListener) {
-    this._timeoutListener = function() {
+    this._timeoutListener = function () {
       self.reset();
       self.reconnect();
     };

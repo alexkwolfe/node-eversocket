@@ -14,7 +14,7 @@ describe("EverSocket", function() {
   beforeEach(function() {
     server = net.createServer();
     server.listen(port);
-    socket = new EverSocket({ type: 'tcp4' });
+    socket = new EverSocket({ type: 'tcp4', reconnectWait: 1 });
   });
   
   afterEach(function() {
@@ -27,17 +27,20 @@ describe("EverSocket", function() {
   });
   
   it('should connect', function(done) {
-    var connected = false;
+    var serverConnected = false;
+    var clientConnected = false;
     server.on('connection', function() {
-      connected = true;
+      serverConnected = true;
     });
     socket.on('connect', function() {
-      setTimeout(function() {
-        assert.isTrue(connected);
-        done();
-      }, 10);
+      clientConnected = true;
     })
     socket.connect(port);
+    setTimeout(function() {
+      assert.isTrue(serverConnected);
+      assert.isTrue(clientConnected);
+      done();
+    }, 10);
   });
   
   it('should reconnect', function(done) {
@@ -69,6 +72,33 @@ describe("EverSocket", function() {
     });
     
     socket.connect(port);
+  });
+  
+  it('should not reconnect after destroy', function(done) {
+    var reconnected = false;
+    
+    server.once('connection', function() {
+      // socket connected for the first time
+      server.once('close', function() {
+        // recreate the connection
+        server = net.createServer();
+        server.once('connection', function(x) {
+          // socket has reconnected
+          reconnected = true;
+        });
+        server.listen(port);
+      });
+      
+      // close the connection
+      server.close();
+      socket.destroy();
+    });
+    
+    socket.connect(port);
+    setTimeout(function() {
+      assert.isFalse(reconnected);
+      done();
+    }, 100);
   });
   
 });
