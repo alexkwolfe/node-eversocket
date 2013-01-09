@@ -104,6 +104,8 @@ EverSocket.prototype.connect = function connect(/*port, host, callback*/) {
       case 'function':
         callback = arg;
         break;
+      case 'undefined':
+        break;
       default:
         self.emit('error', new Error('bad argument to connect'));
         break;
@@ -113,6 +115,9 @@ EverSocket.prototype.connect = function connect(/*port, host, callback*/) {
   this.port = port || this.port;
   this.host = host || this.host || '127.0.0.1';
   args = this.port ? [this.port, this.host] : [this.host];
+
+  if (callback)
+    args.push(callback)
 
   this.constructor.super_.prototype.connect.apply(this, args);
 };
