@@ -18,8 +18,7 @@ The regular net.Socket events are emitted. The `reconnect` event has been added 
 
 ```javascript
 var EverSocket = require('eversocket').EverSocket;
-var socket = new EverSocket({ 
-  type: 'tcp4', 
+var socket = new EverSocket({
   reconnectWait: 100,      // wait 100ms after close event before reconnecting
   timeout: 100,            // set the idle timeout to 100ms
   reconnectOnTimeout: true // reconnect if the connection is idle
@@ -28,4 +27,17 @@ socket.on('reconnect', function() {
   console.log('the socket reconnected following a close or timeout event');
 });
 socket.connect(4999);
+```
+
+## Cancelling re-connections
+
+In order to destroy the socket, re-connections must be cancelled.
+
+```javascript
+var EverSocket = require('eversocket').EverSocket;
+var socket = new EverSocket();
+socket.connect(4999);
+// ...
+socket.cancel(); // cancel re-connections
+socket.destroy();
 ```

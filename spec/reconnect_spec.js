@@ -20,10 +20,10 @@ describe("EverSocket", function() {
   afterEach(function() {
     try {
       socket.destroy();
-    } catch (e) {}
+    } catch(e) {}
     try {
       server.close();
-    } catch (e) {}
+    } catch(e) {}
   });
 
   it('should connect', function(done) {
@@ -34,7 +34,7 @@ describe("EverSocket", function() {
     });
     socket.on('connect', function() {
       clientConnected = true;
-    })
+    });
     socket.connect(port);
     setTimeout(function() {
       assert.isTrue(serverConnected);
@@ -44,50 +44,29 @@ describe("EverSocket", function() {
   });
 
   it('should reconnect', function(done) {
-    var reconnected = false;
-
     server.once('connection', function() {
-      // socket connected for the first time
-      server.once('connection', function() {
-        // socket has reconnected
-        reconnected = true;
-      });
-
-      // close the socket
-      socket.constructor.super_.prototype.destroy.call(socket);
-
-      // listen for reconnect
-      socket.once('reconnect', function() {
-        setTimeout(function() {
-          assert.isTrue(reconnected);
-          done();
-        }, 100);
-      });
+      setTimeout(function() {
+        server.once('connection', function() {
+          done()
+        });
+        socket.destroy();
+      }, 10)
     });
-
     socket.connect(port);
   });
 
-  it('should not reconnect after destroy', function(done) {
-    var reconnected = false;
-
+  it('should not reconnect after cancel', function(done) {
     server.once('connection', function() {
-      // socket connected for the first time
-      server.once('connection', function() {
-        // socket has reconnected
-        reconnected = true;
-      });
-      socket.destroy();
+      setTimeout(function() {
+        server.once('connection', function() {
+          assert.isTrue(false, 'should not have reconnected');
+        });
+        setTimeout(done, 100);
+        socket.cancel();
+        socket.destroy();
+      }, 10)
     });
-
     socket.connect(port);
-
-    setTimeout(function() {
-      assert.isFalse(reconnected);
-      done();
-    }, 100);
   });
-
 
 });
-

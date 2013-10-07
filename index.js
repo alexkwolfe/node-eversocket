@@ -15,7 +15,7 @@ var EverSocket = function (options) {
     waiting: false
   };
 
-  this._destroyed = false;
+  this._cancelled = false;
 
   this._setup();
 };
@@ -31,8 +31,10 @@ EverSocket.prototype.setReconnectOnTimeout = function reconnectOnTimeout(reconne
   this._setupTimeoutListener();
 };
 
-EverSocket.prototype.destroy = function destroy() {
-  this._destroyed = true;
+EverSocket.prototype.cancel = function cancel() {
+  if (this._cancelled)
+    return;
+  this._cancelled = true;
   if (this._timeoutListener) {
     this.removeListener('timeout', this._timeoutListener);
     this._timeoutListener = null;
@@ -41,11 +43,10 @@ EverSocket.prototype.destroy = function destroy() {
     this.removeListener('close', this._closeListener);
     this._closeListener = null;
   }
-  this.constructor.super_.prototype.destroy.call(this);
 };
 
 EverSocket.prototype.reset = function reset() {
-  this._destroyed = false;
+  this._cancelled = false;
   this._retry.waiting = false;
   this.constructor.super_.prototype.destroy.call(this);
 };
@@ -57,7 +58,7 @@ EverSocket.prototype.reconnect = function reconnect() {
   function doReconnect() {
 
     // Bail if we're already reconnecting or if we have been destroyed
-    if (self._retry.waiting || self._destroyed)
+    if (self._retry.waiting || self._cancelled)
       return;
 
     // Set flag to indicate reconnecting
@@ -134,7 +135,7 @@ EverSocket.prototype._setup = function _setup() {
 };
 
 EverSocket.prototype._setupTimeoutListener = function _setupTimeoutListener() {
-  if (this._destroyed) return;
+  if (this._cancelled) return;
   var self = this;
   if (this._retry.onTimeout && !this._timeoutListener) {
     this._timeoutListener = function () {
