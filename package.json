@@ -1,12 +1,18 @@
 {
   "name": "eversocket",
   "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/alexkwolfe/node-eversocket.git"
+  },
   "dependencies": {},
   "devDependencies": {
-    "temp":">= 0.4.x",
+    "temp": ">= 0.4.x",
     "mocha": ">= 0.0.x",
     "chai": ">= 0.0.x"
   },
   "main": "app",
-  "engines": { "node": ">=0.6.x" }
+  "engines": {
+    "node": ">=0.6.x"
+  }
 }
