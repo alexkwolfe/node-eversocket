@@ -5,6 +5,9 @@
     "type": "git",
     "url": "http://github.com/alexkwolfe/node-eversocket.git"
   },
+  "scripts": {
+    "test": "./node_modules/.bin/mocha spec/*"
+  },
   "dependencies": {},
   "devDependencies": {
     "temp": ">= 0.4.x",
