@@ -1,4 +1,6 @@
-A Node.js net.Socket that automatically reconnects on close or timeout. 
+A Node.js net.Socket that automatically reconnects on close or timeout.
+
+[![Build Status](https://travis-ci.org/alexkwolfe/node-eversocket.png?branch=master)](https://travis-ci.org/alexkwolfe/node-eversocket)
 
 ## Options
 
