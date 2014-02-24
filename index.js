@@ -10,6 +10,7 @@ var EverSocket = function (options) {
   this.setTimeout(options.timeout || 0);
 
   this._retry = {
+    timeout: options.timeout || 0,
     onTimeout: options.reconnectOnTimeout || false,
     wait: options.reconnectWait || 1000,
     waiting: false
@@ -63,6 +64,9 @@ EverSocket.prototype.reconnect = function reconnect() {
 
     // Set flag to indicate reconnecting
     self._retry.waiting = true;
+
+    // Reset timeout
+    self.setTimeout(self._retry.timeout);
 
     // Remove reconnecting flag after connect or error
     var connectListener, errorListener;

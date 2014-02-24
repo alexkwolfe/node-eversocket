@@ -9,59 +9,60 @@ var assert = require('assert'),
 describe("EverSocket", function() {
   var port = 4999;
   var server;
-  var socket;
 
-  beforeEach(function() {
+  beforeEach(function(done) {
     server = net.createServer();
-    server.listen(port);
-    socket = new EverSocket({ type: 'tcp4', timeout: 10 });
+    server.listen(port, done);
   });
   
-  afterEach(function() {
-    try { socket.destroy(); } catch(e) {}
-    try { server.close(); } catch(e) {}
-  });
-  
-  it('should emit timeout', function(done) {
-    server.on('connection', function(c) {
-      var writes = 0;
-      var interval = setInterval(function() {
-        c.write('.');
-        if (++writes >= 5) 
-          clearInterval(interval);
-      }, 5);
-    });
-    var data = '';
-    socket.on('timeout', function() {
-      assert.equal('.....', data);
+  afterEach(function(done) {
+    server.close(function() {
+      server = null;
       done();
     });
-    socket.on('data', function(d) {
-      data += d;
-    })
+  });
+
+  it('should emit reconnect on timeout', function(done) {
+    var reconnected = false;
+    var socket = new EverSocket({ type: 'tcp4', timeout: 10, reconnectOnTimeout: true, reconnectWait: 1 });
+
+    server.once('connection', function(c) {
+      setTimeout(function() {
+        assert.isTrue(reconnected);
+        c.end();
+      }, 20);
+    });
+
+    socket.once('close', function() {
+      done();
+    });
+
+    socket.once('reconnect', function() {
+      reconnected = true;
+    });
     socket.connect(port);
   });
-  
-  it('should reconnect on timeout', function(done) {
-    socket = new EverSocket({ type: 'tcp4', timeout: 10, reconnectOnTimeout: true, reconnectWait: 1 });
+
+  it('should continue reconnecting on timeout', function(done) {
+    var timeoutCount = 0;
+    var socket = new EverSocket({ type: 'tcp4', timeout: 10, reconnectOnTimeout: true, reconnectWait: 1 });
+
     server.on('connection', function(c) {
-      var writes = 0;
-      var interval = setInterval(function() {
-        c.write('.');
-        if (++writes >= 5) 
-          clearInterval(interval);
-      }, 5);
+      setTimeout(function() {
+        c.end();
+      }, 20);
     });
-    var data = '';
+
     socket.on('reconnect', function() {
-      assert.equal('.....', data);
-      done();
+      if (timeoutCount === 3)
+        done();
     });
-    socket.on('data', function(d) {
-      data += d;
-    })
+
+    socket.on('timeout', function() {
+      timeoutCount++;
+    });
+
     socket.connect(port);
   });
-  
 });
 
