@@ -49,7 +49,7 @@ EverSocket.prototype.cancel = function cancel() {
 EverSocket.prototype.reset = function reset() {
   this._cancelled = false;
   this._retry.waiting = false;
-  this.constructor.super_.prototype.destroy.call(this);
+  EverSocket.super_.prototype.destroy.call(this);
 };
 
 EverSocket.prototype.reconnect = function reconnect() {
@@ -91,6 +91,7 @@ EverSocket.prototype.reconnect = function reconnect() {
 };
 
 EverSocket.prototype.connect = function connect(/*port, host, callback*/) {
+  
   var args = Array.prototype.slice.call(arguments),
       self = this,
       callback,
@@ -124,7 +125,7 @@ EverSocket.prototype.connect = function connect(/*port, host, callback*/) {
   if (callback)
     args.push(callback)
 
-  this.constructor.super_.prototype.connect.apply(this, args);
+  EverSocket.super_.prototype.connect.apply(this, args);
 };
 
 EverSocket.prototype._setup = function _setup() {
